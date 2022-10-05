@@ -20,39 +20,43 @@ def getPersone(request):
     if request.method == 'GET':
         persone = DatiPersona.objects.all()
         serializer = DatiPersonaSerializer(persone, many=True)
-
+        # restituisce tutte le persone con il metodo get
         return Response(serializer.data)
 
     elif request.method == 'POST':
 
+        # prende i dati inseriti nel form
         surname = request.data.get('surname')
         name = request.data.get('name')
         sex = request.data.get('sex')
         birthdate = request.data.get('birthdate')
         birthplace = request.data.get('birthplace')
 
-        # CALCOLO CF CON I DATI DEL FORM
+        # calcolo del cf con i dati del form
         try:
             cf = codicefiscale.encode(surname=surname, name=name, sex=sex,
                                       birthdate=birthdate, birthplace=birthplace)
 
+        # Se il campo "luogo di nascita" riceve un comune invalido
         except ValueError:
             return JsonResponse({"errore_comune": "Località non valida"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # ESISTE UNA PERSONA NEL DB CON QUESTI DATI?
+        # cerca nel db una Persona con i dati inseriti nel form
         esiste = DatiPersona.objects.filter(surname=surname, name=name, sex=sex,
                                             birthdate=birthdate, birthplace=birthplace)
 
+        # SE ESISTE UNA PERSONA NEL DB CON I DATI DEL FORM
         if esiste:
 
             # CERCA PERSONA CON QUEL CF SUL DB
             plogged = DatiPersona.objects.get(codice_fiscale=cf)
-
+            # Restituisce cf della persona , preso dal db
             return JsonResponse({"codice_fiscale": plogged.codice_fiscale})
-        # CF NON TROVATO SUL DB
+        # Se non esiste una persona nel db con gli stessi dati
         else:
 
             try:
+                # crea nuova persona e la salva nel db
                 pnew = DatiPersona(surname=surname, name=name, sex=sex,
                                    birthdate=birthdate, birthplace=birthplace, codice_fiscale=cf)
                 pnew.save()
@@ -61,6 +65,7 @@ def getPersone(request):
                 avviso = 'valore già presente nel db'
                 print(avviso)
 
+            # Ritorna il cf della nuova persona aggiunta al db
             return JsonResponse({"codice_fiscale": pnew.codice_fiscale, "messaggio": "Nuovo CF aggiunto al db"})
 
 
