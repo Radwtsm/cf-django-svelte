@@ -2,32 +2,38 @@
   import IoIosPerson from "svelte-icons/io/IoIosPerson.svelte";
   import { fade } from "svelte/transition";
 
+  // isInvalidLocation = True -> Comune inserito non valido
   let isInvalidLocation = false;
+  // isNuovo = True -> non esiste una persona con questi dati nel db, crea nuova persona e aggiungi al DB
   let isNuovo = false;
 
   let messaggio;
+
+  //codice fiscale da mostrare
   let codicefinale = "";
 
-  let surname, name, sex, birthplace;
+  // variabili che contengono dati degli input nel form
+  let surname, name, sex, birthplace, birthdate;
+
+  // scelte del dropdown nel campo "sex"
   let sexes = [
     { id: 1, option: "M" },
     { id: 2, option: "F" },
   ];
 
-  let birthdate;
-
   let persona = null;
 
   const onSubmit = async () => {
+    // toglie la visualizzazione del cf quando il form effettua un'altro submit
     codicefinale = "";
 
-    console.log(surname, name, sex, birthdate, birthplace);
-
+    //richiesta post alle persone del db
     const res = await fetch("http://127.0.0.1:8000/persone/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
+      // passare i dati del form in json alla richiesta POST
       body: JSON.stringify({
         surname,
         name,
@@ -39,6 +45,7 @@
 
     const json = await res.json();
 
+    //stampa dei vari errori in base agli input invalidi
     if (json["messaggio"]) {
       isNuovo = true;
 
@@ -104,6 +111,7 @@
 
     <br />
 
+    <!--Rendering condizionale in base agli errori nella risposta json-->
     {#if isInvalidLocation}
       <p id="error" transition:fade={{ duration: 150 }}>Comune non corretto!</p>
     {/if}
